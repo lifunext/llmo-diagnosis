@@ -1,0 +1,23 @@
+from flask import Flask, request, jsonify
+import requests
+from bs4 import BeautifulSoup
+
+app = Flask(__name__)
+
+@app.route('/fetch', methods=['POST'])
+def fetch():
+    data = request.get_json()
+    url = data.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    try:
+        res = requests.get(url, timeout=10)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        title = soup.title.string if soup.title else ''
+        headings = [h.get_text(strip=True) for h in soup.find_all(['h1', 'h2', 'h3'])]
+        body = soup.get_text(strip=True)[:3000]
+        return jsonify({'title': title, 'headings': headings, 'body': body})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+app.run(host='0.0.0.0', port=8080)
