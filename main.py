@@ -5,33 +5,31 @@ import openai
 
 app = Flask(__name__)
 
-# ★OpenAI APIキーをここに直書き
+# OpenAI APIキーをここに貼り付けてください（セキュリティのため、後で環境変数にするのが望ましい）
 openai.api_key = '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'
 
 @app.route('/fetch', methods=['POST'])
 def fetch():
+    # 1. Makeから送られてきたJSONからURLを取得
     data = request.get_json()
     url = data.get('url')
-    
-    try:
-        # HTML取得とテキスト抽出
-        html = requests.get(url, timeout=5).text
-        soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text()
 
-        # GPTに送信して評価コメントを生成
-        prompt = f"以下のページ内容を要約し、改善提案を含めたフィードバックをください：\n\n{text[:2000]}"  # 長すぎ防止
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "あなたは優秀なマーケティングコンサルタントです。"},
-                {"role": "user", "content": prompt}
-            ]
-        )
+    # 2. 指定URLのHTMLを取得し、テキストだけを抽出
+    html = requests.get(url).text
+    soup = BeautifulSoup(html, 'html.parser')
+    text = soup.get_text()
 
-        feedback = response['choices'][0]['message']['content']
+    # 3. OpenAI GPTに渡してフィードバックコメントを生成
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # GPT-4でも可
+        messages=[
+            {"role": "system", "content": "あなたはSEOに詳しいプロのWebマーケターです。"},
+            {"role": "user", "content": f"以下のページを診断してください。\n{text}"}
+        ]
+    )
 
-        return jsonify({"feedback": feedback})
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    comment = response['choices'][0]['message']['content']
+
+    # 4. 診断結果コメントをJSON形式で返す
+    return jsonify({'result': comment})
+
