@@ -6,24 +6,31 @@ import openai
 
 app = Flask(__name__)
 
-# OpenAI APIキーを環境変数から読み込む
+# OpenAI APIキーを環境変数から読み込み
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @app.route('/fetch', methods=['POST'])
 def fetch():
     data = request.get_json()
+    print("✅ 受信データ:", data)  # デバッグ用ログ
     url = data.get('url')
 
     if not url:
         return jsonify({'error': 'URL is missing'}), 400
 
     try:
-        # URLからHTMLを取得
-        html = requests.get(url, timeout=10).text
+        headers = {
+            'User-Agent': 'Mozilla/5.0'
+        }
+        html = requests.get(url, headers=headers).text
+    except Exception as e:
+        print("❌ HTML取得エラー:", e)
+        return jsonify({'error': 'Failed to fetch HTML', 'detail': str(e)}), 500
+
+    try:
         soup = BeautifulSoup(html, 'html.parser')
         text = soup.get_text()
 
-        # GPTに投げてコメントを生成
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -33,10 +40,11 @@ def fetch():
         )
 
         comment = response['choices'][0]['message']['content']
-        return jsonify({'comment': comment})
+        return jsonify({'result': comment})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print("❌ GPTエラー:", e)
+        return jsonify({'error': 'Failed to generate comment', 'detail': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run()
