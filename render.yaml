@@ -1,3 +1,7 @@
-flask
-requests
-beautifulsoup4
+services:
+  - type: web
+    name: llmo-diagnosis
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    plan: free
