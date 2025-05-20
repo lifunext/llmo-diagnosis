@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 import requests
 from bs4 import BeautifulSoup
+import openai
 
 app = Flask(__name__)
+openai.api_key = 'sk-あなたのOpenAI APIキーをここに入れる'
 
 @app.route('/fetch', methods=['POST'])
 def fetch():
@@ -10,30 +12,27 @@ def fetch():
     url = data.get('url')
 
     if not url:
-        return jsonify({'error': 'No URL provided'}), 400
+        return jsonify({"error": "URLが指定されていません"}), 400
 
     try:
-        res = requests.get(url, timeout=10)
-        soup = BeautifulSoup(res.text, 'html.parser')
+        # WebページのHTMLを取得
+        html = requests.get(url, timeout=5).text
 
-        # タイトル
-        title = soup.title.string if soup.title else ''
+        # テキストを抽出
+        soup = BeautifulSoup(html, 'html.parser')
+        text = soup.get_text()
 
-        # 見出し h1〜h3
-        headings = [h.get_text(strip=True) for h in soup.find_all(['h1', 'h2', 'h3'])]
+        # ChatGPTで診断コメント生成
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "あなたはWebサイトの改善点を提案するマーケターです。SEO・読みやすさ・CV導線などを見て改善ポイントをフィードバックしてください。"},
+                {"role": "user", "content": f"以下はとあるWebページの内容です：\n{text}"}
+            ]
+        )
 
-        # 本文（先頭3000文字）
-        body = soup.get_text(strip=True)[:3000]
-
-        return jsonify({
-            'title': title,
-            'headings': headings,
-            'body': body
-        })
+        result = response['choices'][0]['message']['content']
+        return jsonify({"result": result})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# RenderのFreeプラン対応：ポート固定＆外部アクセス可能設定
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+        return jsonify({"error": str(e)}), 500
