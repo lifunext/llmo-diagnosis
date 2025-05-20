@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import openai
 
 app = Flask(__name__)
-openai.api_key = 'sk-あなたのOpenAI APIキーをここに入れる'
+openai.api_key = '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'
 
 @app.route('/fetch', methods=['POST'])
 def fetch():
