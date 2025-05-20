@@ -30,6 +30,7 @@ def fetch():
 
     comment = response['choices'][0]['message']['content']
 
-    # 4. 診断結果コメントをJSON形式で返す
-    return jsonify({'result': comment})
+    # 4. 診断結果コメントをJSON形式で返す（←ここが変更済み）
+    return jsonify({'comment': comment})
+
 
