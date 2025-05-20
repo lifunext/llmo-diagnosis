@@ -6,7 +6,7 @@ import openai
 
 app = Flask(__name__)
 
-# OpenAI API key from environment variable
+# OpenAI APIキーを環境変数から読み込む
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @app.route('/fetch', methods=['POST'])
@@ -18,12 +18,12 @@ def fetch():
         return jsonify({'error': 'URL is missing'}), 400
 
     try:
-        # Get HTML from URL
+        # URLからHTMLを取得
         html = requests.get(url, timeout=10).text
         soup = BeautifulSoup(html, 'html.parser')
         text = soup.get_text()
 
-        # Send text to OpenAI
+        # GPTに投げてコメントを生成
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
