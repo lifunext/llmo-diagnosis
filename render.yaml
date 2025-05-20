@@ -1,7 +1,7 @@
 services:
-type: web
-name: llmo-diagnosis
-env: python
-buildCommand: "pip install -r requirements.txt"
-startCommand: "python main.py"
-plan: free
+  - type: web
+    name: llmo-diagnosis
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    plan: free
