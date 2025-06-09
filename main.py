@@ -1,40 +1,44 @@
-from flask import Flask, request, jsonify
-import requests
-from bs4 import BeautifulSoup
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 import openai
 import os
 
-app = Flask(__name__)
+app = FastAPI()
 
-# 環境変数から OpenAI API キーを読み込む
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# CORS設定（Makeからのアクセス許可）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.route('/fetch', methods=['POST'])
-def fetch():
-    data = request.get_json()
-    url = data.get('url')
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    if not url:
-        return jsonify({'error': 'No URL provided'}), 400
+@app.post("/fetch")
+async def fetch(request: Request):
+    data = await request.json()
+    url = data.get("url")
 
-    try:
-        html = requests.get(url, timeout=10).text
-        soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text()
+    prompt = f"""以下はとあるWebページのHTML構造です。
+下記URLページがGoogleの「AI概要（AI Overview）」に引用されやすいかどうかを100点満点で評価してください。
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",  # GPT-4o モデルを使用（アクセス可能なら）
-            messages=[
-                {"role": "system", "content": "あなたはSEOに詳しいWebマーケターです。ページ構成・見出し・UX改善などの観点からコメントしてください。"},
-                {"role": "user", "content": f"以下のWebページをSEOの観点で診断してください：\n{text}"}
-            ]
-        )
+【分析項目】
+- タイトルと見出しが明確か？
+- 構造化されたQ&A形式があるか？
+- 専門性や信頼性が感じられるか？
+- HTML内に著者や運営者、監修者の情報はあるか？
 
-        comment = response['choices'][0]['message']['content']
-        return jsonify({"comment": comment})
+以下の点をもとに、点数（100点満点）＋改善アドバイスをください。
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+=== URL ===
+{url}
+"""
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    result = response['choices'][0]['message']['content']
+    return {"answer": result}
