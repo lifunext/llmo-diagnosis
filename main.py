@@ -28,7 +28,7 @@ async def fetch(request: Request):
         print("Prompt:", prompt)  # ★ログ出力追加
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[{"role": "user", "content": prompt}]
         )
         result = response['choices'][0]['message']['content']
