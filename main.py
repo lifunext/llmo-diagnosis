@@ -1,26 +1,33 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import openai
 import os
 
 app = FastAPI()
 
-# CORS設定（Makeからのアクセス許可）
+# CORS設定（Makeなど外部サービスからのアクセスを許可）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=["*"],  # 必要に応じて制限
+    allow_credentials=True,
+    allow_methods=["POST"],  # 明示的にPOSTだけ許可
     allow_headers=["*"],
 )
 
+# OpenAI APIキーを環境変数から取得
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.post("/fetch")
 async def fetch(request: Request):
-    data = await request.json()
-    url = data.get("url")
+    try:
+        data = await request.json()
+        url = data.get("url", "")
 
-    prompt = f"""以下はとあるWebページのHTML構造です。
+        if not url:
+            return JSONResponse(content={"error": "No URL provided"}, status_code=400)
+
+        prompt = f"""以下はとあるWebページのHTML構造です。
 下記URLページがGoogleの「AI概要（AI Overview）」に引用されやすいかどうかを100点満点で評価してください。
 
 【分析項目】
@@ -35,10 +42,13 @@ async def fetch(request: Request):
 {url}
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-    result = response['choices'][0]['message']['content']
-    return {"answer": result}
+        result = response['choices'][0]['message']['content']
+        return {"answer": result}
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
