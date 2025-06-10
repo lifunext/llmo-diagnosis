@@ -19,20 +19,22 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 async def fetch(request: Request):
     try:
         data = await request.json()
+        print("Incoming data:", data)  # ★ログ出力追加
         url = data.get("url")
         if not url:
             return JSONResponse(content={"error": "No URL provided"}, status_code=400)
 
-        prompt = f"以下はとあるWebページのHTML構造です。...（省略）...=== URL ===\n{url}"
+        prompt = f"以下はとあるWebページのHTML構造です...=== URL ===\n{url}"
+        print("Prompt:", prompt)  # ★ログ出力追加
+
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
         result = response['choices'][0]['message']['content']
         return {"answer": result}
+
     except Exception as e:
+        print("Exception occurred:", e)  # ★ログ出力追加
         return JSONResponse(content={"error": str(e)}, status_code=500)
-        
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=10000)
+
