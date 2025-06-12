@@ -52,7 +52,7 @@ async def fetch(request: Request):
 
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # または gpt-4 / gpt-3.5-turbo
+            model="gpt-4.o",  # または gpt-4 / gpt-3.5-turbo
             messages=[{"role": "user", "content": prompt}]
         )
         result = response['choices'][0]['message']['content']
