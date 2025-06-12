@@ -25,11 +25,11 @@ async def fetch(request: Request):
             return JSONResponse(content={"error": "No URL provided"}, status_code=400)
 
         prompt = f"""以下はとあるWebページのHTML構造です。
-このURLがGoogleの「AI概要（AI Overview）」に引用されやすいか評価してください。
+以下のURLがGoogleの「AI概要（AI Overview）」に引用されやすいか評価してください。
 以下の評価ポイントをもとに、点数（100点満点。各項目25点満点でトータルが総合点。）＋改善アドバイスをください。
 各項目と返答の仕方は下記でお願いします。
 返答は「<br>」などを使い、HTMLメールで改行が反映されるように整えてください。
-▲▲には一言でポイントを買いえてください。
+▲▲には一言でポイントを書いてください。
 改行も一言ずつ改行し、各評価ポイントの間には1行開けてください。
 改善アドバイスは箇条書きでお願いします。
 
