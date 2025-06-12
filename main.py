@@ -24,7 +24,7 @@ async def fetch(request: Request):
         if not url:
             return JSONResponse(content={"error": "No URL provided"}, status_code=400)
 
-        prompt = f"""以下はとあるWebページのHTML構造です。
+        prompt = f"""以下はとあるWebページです。
 以下のURLがGoogleの「AI概要（AI Overview）」に引用されやすいか評価してください。
 以下の評価ポイントをもとに、点数（100点満点。各項目25点満点でトータルが総合点。）＋改善アドバイスをください。
 各項目と返答の仕方は下記でお願いします。
